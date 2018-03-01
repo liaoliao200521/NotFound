@@ -1,0 +1,153 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import sys
+import hashlib
+import json
+import urllib
+import urllib2
+import os
+import re
+import time
+import datetime
+import socket
+import yaml
+i=0
+shopid = ''
+dish1 = ""
+dish2 = ""
+dish3 = ""
+dishs = {}
+for line in open('/Users/Eling/Desktop/duohuo_data/item_detail.csv'):
+    if re.match(r"\s*#", line):
+        continue
+    if re.match(r"\s*$", line):
+        continue
+    i = i + 1
+    if i == 1:
+        shopid = int(line.strip().split(',')[0])
+        dish1 = int(line.strip().split(',')[2])
+    if i == 2:
+        dish2 = int(line.strip().split(',')[2])
+    if i == 3:
+        dish3 = int(line.strip().split(',')[2])
+        i = 0
+        dishs[shopid]={"shopid":shopid,"dish1":dish1,"dish2":dish2,"dish3":dish3}
+print dishs
+
+
+ksids = {}
+for line in open('/Users/Eling/Desktop/duohuo_data/ksid0'):
+    if re.match(r"\s*#", line):
+        continue
+    if re.match(r"\s*$", line):
+        continue
+    ksid = line.strip().split('==')[0]
+    rid = int(line.strip().split('==')[1])
+    ksids[rid]={"rid":rid,"ksid":ksid}
+print ksids
+
+
+phones = {}
+for line in open('/Users/Eling/Desktop/duohuo_data/userid_phone'):
+    if re.match(r"\s*#", line):
+        continue
+    if re.match(r"\s*$", line):
+        continue
+    userid = int(line.strip().split(' ')[0])
+    phone_need = int(line.strip().split(' ')[1])
+    phones[userid]={"userid":userid,"phone_need":phone_need}
+print phones
+
+
+sids = {}
+for line in open('/Users/Eling/Desktop/duohuo_data/user_info.txt'):
+    if re.match(r"\s*#", line):
+        continue
+    if re.match(r"\s*$", line):
+        continue
+    sid = line.strip().split(',')[2]
+    user_id = int(line.strip().split(',')[0])
+    user_name_1 = line.strip().split(',')[1]
+    sids[user_name_1]={"usrid":user_id,"sid":sid,"username":user_name_1}
+print sids
+
+users = []
+
+for line in open('/Users/Eling/Desktop/duohuo_data/user'):
+    if re.match(r"\s*#", line):
+        continue
+    if re.match(r"\s*$", line):
+        continue
+
+    # userid = int(line.strip().split(' ')[0])
+    user_name = line.strip().split(' ')[1]
+    pwd = line.strip().split(' ')[2]
+    phone = int(line.strip().split(' ')[3].strip())
+    users.append({
+  "username": user_name,
+  "password": pwd})
+  # "phone": phone})
+    # print users
+
+
+
+
+
+shop = []
+x = ''
+y = ''
+shopid1 = ''
+shopid2 = ''
+shopname1 = ''
+shopname2 = ''
+for line in open('/Users/Eling/Desktop/duohuo_data/duohuo_check_test_shops.txt'):
+    if re.match(r"\s*#", line):
+        continue
+    if re.match(r"\s*$", line):
+        continue
+    i = i + 1
+    if i == 1:
+        x = line.strip().split(',')[0]
+        y = line.strip().split(',')[1]
+    if i == 2:
+        shopid1 = int(line.strip().split(',')[0])
+        shopname1 = line.strip().split(',')[1]
+    if i == 3:
+        shopid2 = int(line.strip().split(',')[0])
+        shopname2 = line.strip().split(',')[1]
+        dish = dishs[shopid1]
+        user = users[len(shop)*2]
+        ksid = ksids[shopid1]
+        sid = sids[user["username"]]
+        print sid
+        phone = phones[sid["usrid"]]
+        # print ksid
+        shop.append({"loc":x+","+y,"longitude":x,"latitude":y,"restaurantId":shopid1,"restrant_name":shopname1,
+                     "dish1": dish["dish1"],
+                     "dish2": dish["dish2"],
+                     "dish3": dish["dish3"],
+                     "userid": sid["usrid"],
+                     "sid":sid["sid"],
+                     "username": user["username"],
+                     "password": user["password"],
+                     "phone": phone["phone_need"],"ksid": ksid["ksid"]
+                     })
+        # shop.append({"loc": x + "," + y, "longitude": x, "latitude": y, "restrantId": shopid1, "restrant_name": shopname1})
+        i = 0
+        print shop
+
+data={}
+x=0
+for item in shop:
+    x=x+1
+    item["shard_id"]=x
+    name="shard"+str(x)
+    data[name]=item
+    # print item
+    # print data
+
+# print len(shop)
+
+with open('/Users/Eling/Downloads/testinfra/lpt/duohuo/shard_information.yaml', 'w') as outfile:
+    yaml.dump(data, outfile, default_flow_style=False)
